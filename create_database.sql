@@ -66,7 +66,9 @@ create table MYNAB_DB.PARENT_CATEGORY (
 	PARENT_CATEGORY_NAME varchar(70),
 	PARENT_CATEGORY_POSITION int not null default 1,
 	primary key (ID_PARENT_CATEGORY),
-	foreign key (ID_USER) references MYNAB_DB.USER(ID_USER)
+	constraint UC_POSITION unique(ID_USER, PARENT_CATEGORY_POSITION),
+	foreign key (ID_USER) references MYNAB_DB.USER(ID_USER),
+  index (ID_USER, ID_PARENT_CATEGORY)
 );
 
 -- ----------------------------------------------------------------------------
@@ -120,4 +122,3 @@ create table MYNAB_DB.TRANSFER (
 	foreign key (ID_USER, ID_TRANSACTION_OUTFLOW) references MYNAB_DB.TRANSACTION(ID_USER, ID_TRANSACTION),
 	foreign key (ID_USER, ID_TRANSACTION_INFLOW) references MYNAB_DB.TRANSACTION(ID_USER, ID_TRANSACTION)
 );
-
