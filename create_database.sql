@@ -8,6 +8,16 @@ drop table if exists MYNAB_DB.CATEGORY;
 drop table if exists MYNAB_DB.PARENT_CATEGORY;
 drop table if exists MYNAB_DB.ACCOUNT;
 drop table if exists MYNAB_DB.USER;
+drop table if exists MYNAB_DB.SEQUENCES;
+
+create table MYNAB_DB.SEQUENCES (
+  ID_SEQUENCE int not null auto_increment,
+	SEQUENCE_NAME varchar(16) not null,
+  SEQUENCE_VAL int not null,
+  primary key (ID_SEQUENCE)
+);
+
+insert into MYNAB_DB.SEQUENCES (SEQUENCE_NAME, SEQUENCE_VAL) values ('CATEGORIES', 1);
 
 -- ----------------------------------------------------------------------------
 -- Table USER
@@ -51,10 +61,10 @@ create table MYNAB_DB.PAYEE (
 -- Table PARENT_CATEGORY
 -- ----------------------------------------------------------------------------
 create table MYNAB_DB.PARENT_CATEGORY (
-	ID_PARENT_CATEGORY int not null auto_increment,
+	ID_PARENT_CATEGORY int not null,
 	ID_USER int not null,
 	PARENT_CATEGORY_NAME varchar(70),
-	POSITION int not null default 1,
+	PARENT_CATEGORY_POSITION int not null default 1,
 	primary key (ID_PARENT_CATEGORY),
 	foreign key (ID_USER) references MYNAB_DB.USER(ID_USER)
 );
@@ -63,11 +73,10 @@ create table MYNAB_DB.PARENT_CATEGORY (
 -- Table CATEGORY
 -- ----------------------------------------------------------------------------
 create table MYNAB_DB.CATEGORY (
-	ID_CATEGORY int not null auto_increment,
+	ID_CATEGORY int not null,
 	ID_USER int not null,
 	ID_PARENT_CATEGORY int not null,
 	CATEGORY_NAME varchar(70),
-	POSITION int not null default 1,
 	primary key (ID_CATEGORY),
 	foreign key (ID_USER, ID_PARENT_CATEGORY) references MYNAB_DB.PARENT_CATEGORY(ID_USER, ID_PARENT_CATEGORY),
 	index (ID_USER, ID_CATEGORY)
