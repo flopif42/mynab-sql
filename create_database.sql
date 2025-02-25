@@ -1,6 +1,7 @@
 -- ----------------------------------------------------------------------------
 -- Drop tables
 -- ----------------------------------------------------------------------------
+drop table if exists MYNAB_DB.BUDGET_LINE;
 drop table if exists MYNAB_DB.TRANSFER;
 drop table if exists MYNAB_DB.TRANSACTION;
 drop table if exists MYNAB_DB.PAYEE;
@@ -8,16 +9,7 @@ drop table if exists MYNAB_DB.CATEGORY;
 drop table if exists MYNAB_DB.PARENT_CATEGORY;
 drop table if exists MYNAB_DB.ACCOUNT;
 drop table if exists MYNAB_DB.USER;
-drop table if exists MYNAB_DB.SEQUENCES;
-
-create table MYNAB_DB.SEQUENCES (
-  ID_SEQUENCE int not null auto_increment,
-	SEQUENCE_NAME varchar(16) not null,
-  SEQUENCE_VAL int not null,
-  primary key (ID_SEQUENCE)
-);
-
-insert into MYNAB_DB.SEQUENCES (SEQUENCE_NAME, SEQUENCE_VAL) values ('CATEGORIES', 1);
+drop view if exists MYNAB_DB.EXPENSES;
 
 -- ----------------------------------------------------------------------------
 -- Table USER
@@ -61,25 +53,25 @@ create table MYNAB_DB.PAYEE (
 -- Table PARENT_CATEGORY
 -- ----------------------------------------------------------------------------
 create table MYNAB_DB.PARENT_CATEGORY (
-	ID_PARENT_CATEGORY int not null,
 	ID_USER int not null,
+	ID_PARENT_CATEGORY int not null,
 	PARENT_CATEGORY_NAME varchar(70),
 	PARENT_CATEGORY_POSITION int not null default 1,
-	primary key (ID_PARENT_CATEGORY),
-	constraint UC_POSITION unique(ID_USER, PARENT_CATEGORY_POSITION),
+	primary key (ID_USER, ID_PARENT_CATEGORY),
 	foreign key (ID_USER) references MYNAB_DB.USER(ID_USER),
   index (ID_USER, ID_PARENT_CATEGORY)
 );
+
 
 -- ----------------------------------------------------------------------------
 -- Table CATEGORY
 -- ----------------------------------------------------------------------------
 create table MYNAB_DB.CATEGORY (
-	ID_CATEGORY int not null,
 	ID_USER int not null,
+	ID_CATEGORY int not null,
 	ID_PARENT_CATEGORY int not null,
 	CATEGORY_NAME varchar(70),
-	primary key (ID_CATEGORY),
+	primary key (ID_USER, ID_CATEGORY),
 	foreign key (ID_USER, ID_PARENT_CATEGORY) references MYNAB_DB.PARENT_CATEGORY(ID_USER, ID_PARENT_CATEGORY),
 	index (ID_USER, ID_CATEGORY)
 );
@@ -122,3 +114,25 @@ create table MYNAB_DB.TRANSFER (
 	foreign key (ID_USER, ID_TRANSACTION_OUTFLOW) references MYNAB_DB.TRANSACTION(ID_USER, ID_TRANSACTION),
 	foreign key (ID_USER, ID_TRANSACTION_INFLOW) references MYNAB_DB.TRANSACTION(ID_USER, ID_TRANSACTION)
 );
+
+-- ----------------------------------------------------------------------------
+-- Table BUDGET_LINE
+-- ----------------------------------------------------------------------------
+create table MYNAB_DB.BUDGET_LINE (
+	ID_USER int not null,
+	ID_CATEGORY int not null,
+	BUDGET_LINE_YEAR int not null,
+	BUDGET_LINE_MONTH int not null,
+	BUDGET_LINE_AMOUNT  int not null default 0,
+	primary key (ID_USER, ID_CATEGORY, BUDGET_LINE_YEAR, BUDGET_LINE_MONTH),
+	foreign key (ID_USER) references MYNAB_DB.USER(ID_USER),
+	foreign key (ID_USER, ID_CATEGORY) references MYNAB_DB.CATEGORY(ID_USER, ID_CATEGORY)
+);
+
+-- ----------------------------------------------------------------------------
+-- View EXPENSES
+-- ----------------------------------------------------------------------------
+create or replace view EXPENSES as 
+select year(txn.TRANSACTION_DATE) as EXP_YEAR, month(txn.TRANSACTION_DATE) as EXP_MONTH, txn.ID_CATEGORY, sum(txn.TRANSACTION_AMOUNT * txn.TRANSACTION_FLOW) as "EXP_AMOUNT"
+from TRANSACTION txn
+group by year(txn.TRANSACTION_DATE), month(txn.TRANSACTION_DATE), txn.ID_CATEGORY;
