@@ -10,6 +10,7 @@ drop table if exists MYNAB_DB.PARENT_CATEGORY;
 drop table if exists MYNAB_DB.ACCOUNT;
 drop table if exists MYNAB_DB.USER;
 drop view if exists MYNAB_DB.EXPENSES;
+drop view if exists BUDGET_PERIOD;
 
 -- ----------------------------------------------------------------------------
 -- Table USER
@@ -133,6 +134,18 @@ create table MYNAB_DB.BUDGET_LINE (
 -- View EXPENSES
 -- ----------------------------------------------------------------------------
 create or replace view EXPENSES as 
-select year(txn.TRANSACTION_DATE) as EXP_YEAR, month(txn.TRANSACTION_DATE) as EXP_MONTH, txn.ID_CATEGORY, sum(txn.TRANSACTION_AMOUNT * txn.TRANSACTION_FLOW) as "EXP_AMOUNT"
-from TRANSACTION txn
-group by year(txn.TRANSACTION_DATE), month(txn.TRANSACTION_DATE), txn.ID_CATEGORY;
+select ID_USER, year(TRANSACTION_DATE) as EXP_YEAR, month(TRANSACTION_DATE) as EXP_MONTH, ID_CATEGORY, sum(TRANSACTION_AMOUNT * TRANSACTION_FLOW) as "EXP_AMOUNT"
+from TRANSACTION
+where ID_CATEGORY is not null
+and ID_CATEGORY not in (0, 1)
+group by ID_USER, year(TRANSACTION_DATE), month(TRANSACTION_DATE), ID_CATEGORY;
+
+-- ----------------------------------------------------------------------------
+-- View BUDGET_PERIOD
+-- ----------------------------------------------------------------------------
+create or replace view BUDGET_PERIOD as 
+select ID_USER, BUDGET_LINE_YEAR as "YEAR", BUDGET_LINE_MONTH as "MONTH", ID_CATEGORY
+from BUDGET_LINE
+union
+select ID_USER, EXP_YEAR, EXP_MONTH, ID_CATEGORY
+from EXPENSES;
