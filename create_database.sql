@@ -10,7 +10,8 @@ drop table if exists MYNAB_DB.PARENT_CATEGORY;
 drop table if exists MYNAB_DB.ACCOUNT;
 drop table if exists MYNAB_DB.USER;
 drop view if exists MYNAB_DB.EXPENSES;
-drop view if exists BUDGET_PERIOD;
+drop view if exists MYNAB_DB.BUDGET_PERIOD;
+drop view if exists MYNAB_DB.AVAILABLE_TO_BUDGET;
 
 -- ----------------------------------------------------------------------------
 -- Table USER
@@ -133,19 +134,41 @@ create table MYNAB_DB.BUDGET_LINE (
 -- ----------------------------------------------------------------------------
 -- View EXPENSES
 -- ----------------------------------------------------------------------------
-create or replace view EXPENSES as 
+create or replace view MYNAB_DB.EXPENSES as 
 select ID_USER, year(TRANSACTION_DATE) as EXP_YEAR, month(TRANSACTION_DATE) as EXP_MONTH, ID_CATEGORY, sum(TRANSACTION_AMOUNT * TRANSACTION_FLOW) as "EXP_AMOUNT"
 from TRANSACTION
 where ID_CATEGORY is not null
-and ID_CATEGORY not in (0, 1)
+and ID_CATEGORY <> 0
 group by ID_USER, year(TRANSACTION_DATE), month(TRANSACTION_DATE), ID_CATEGORY;
+
+-- ----------------------------------------------------------------------------
+-- View INCOME
+-- ----------------------------------------------------------------------------
+create or replace view MYNAB_DB.INCOME as 
+select ID_USER, year(TRANSACTION_DATE) as INC_YEAR, month(TRANSACTION_DATE) as INC_MONTH, sum(TRANSACTION_AMOUNT * TRANSACTION_FLOW) as INC_AMOUNT
+from TRANSACTION
+where ID_CATEGORY = 0
+group by ID_USER, year(TRANSACTION_DATE), month(TRANSACTION_DATE);
 
 -- ----------------------------------------------------------------------------
 -- View BUDGET_PERIOD
 -- ----------------------------------------------------------------------------
-create or replace view BUDGET_PERIOD as 
-select ID_USER, BUDGET_LINE_YEAR as "YEAR", BUDGET_LINE_MONTH as "MONTH", ID_CATEGORY
+create or replace view MYNAB_DB.BUDGET_PERIOD as 
+select ID_USER, BUDGET_LINE_YEAR as year, BUDGET_LINE_MONTH as month
 from BUDGET_LINE
 union
-select ID_USER, EXP_YEAR, EXP_MONTH, ID_CATEGORY
-from EXPENSES;
+select ID_USER, year(txn.TRANSACTION_DATE), month(txn.TRANSACTION_DATE)
+from TRANSACTION txn;
+
+-- ----------------------------------------------------------------------------
+-- View AVAILABLE_TO_BUDGET
+-- ----------------------------------------------------------------------------
+create or replace view MYNAB_DB.AVAILABLE_TO_BUDGET as 
+select p.ID_USER, p.YEAR, p.MONTH, 
+  ifnull(i.INC_AMOUNT,0) - sum(ifnull(BUDGET_LINE_AMOUNT, 0)) as available
+from BUDGET_PERIOD p
+left join INCOME i
+	on i.ID_USER = p.ID_USER and i.INC_YEAR = p.YEAR and i.INC_MONTH = p.MONTH
+left join BUDGET_LINE bl
+	on bl.ID_USER = p.ID_USER and bl.BUDGET_LINE_YEAR = p.YEAR and bl.BUDGET_LINE_MONTH = p.MONTH
+group by p.ID_USER, p.YEAR, p.MONTH;
