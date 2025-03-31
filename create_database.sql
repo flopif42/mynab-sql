@@ -8,12 +8,22 @@ drop table if exists MYNAB_DB.PAYEE;
 drop table if exists MYNAB_DB.CATEGORY;
 drop table if exists MYNAB_DB.PARENT_CATEGORY;
 drop table if exists MYNAB_DB.ACCOUNT;
+drop table if exists MYNAB_DB.RF_ACCOUNT_TYPE;
+drop table if exists MYNAB_DB.RF_ACCOUNT_STATUS;
 drop table if exists MYNAB_DB.USER;
+drop table if exists MYNAB_DB.VERSION;
 drop view if exists MYNAB_DB.EXPENSES;
 drop view if exists MYNAB_DB.BUDGET_PERIOD;
 drop view if exists MYNAB_DB.AVAILABLE_TO_BUDGET;
 
 -- ----------------------------------------------------------------------------
+-- Table VERSION
+-- ----------------------------------------------------------------------------
+create table MYNAB_DB.VERSION (
+	VERSION varchar(30) not null
+);
+
+------------------------------------------------------------------------------
 -- Table USER
 -- ----------------------------------------------------------------------------
 create table MYNAB_DB.USER (
@@ -27,6 +37,28 @@ create table MYNAB_DB.USER (
 );
 
 -- ----------------------------------------------------------------------------
+-- Table RF_ACCOUNT_TYPE
+-- ----------------------------------------------------------------------------
+create table MYNAB_DB.RF_ACCOUNT_TYPE (
+	ID_ACCOUNT_TYPE int not null,
+	ACCOUNT_TYPE_DESCRIPTION varchar(50) not null,
+	primary key (ID_ACCOUNT_TYPE)
+);
+insert into MYNAB_DB.RF_ACCOUNT_TYPE (ID_ACCOUNT_TYPE, ACCOUNT_TYPE_DESCRIPTION) values (1, 'On-budget');
+insert into MYNAB_DB.RF_ACCOUNT_TYPE (ID_ACCOUNT_TYPE, ACCOUNT_TYPE_DESCRIPTION) values (2, 'Off-budget');
+
+-- ----------------------------------------------------------------------------
+-- Table RF_ACCOUNT_STATUS
+-- ----------------------------------------------------------------------------
+create table MYNAB_DB.RF_ACCOUNT_STATUS (
+	ID_ACCOUNT_STATUS int not null,
+	ACCOUNT_STATUS_DESCRIPTION varchar(50) not null,
+	primary key (ID_ACCOUNT_STATUS)
+);
+insert into MYNAB_DB.RF_ACCOUNT_STATUS (ID_ACCOUNT_STATUS, ACCOUNT_STATUS_DESCRIPTION) values (0, 'Closed');
+insert into MYNAB_DB.RF_ACCOUNT_STATUS (ID_ACCOUNT_STATUS, ACCOUNT_STATUS_DESCRIPTION) values (1, 'Open');
+
+-- ----------------------------------------------------------------------------
 -- Table ACCOUNT
 -- ----------------------------------------------------------------------------
 create table MYNAB_DB.ACCOUNT (
@@ -37,7 +69,8 @@ create table MYNAB_DB.ACCOUNT (
 	ACCOUNT_STATUS int not null default 1,
 	primary key (ID_ACCOUNT),
 	foreign key (ID_USER) references MYNAB_DB.USER(ID_USER),
-	constraint ACCOUNT_STATUS_VAL check (ACCOUNT_STATUS in (0, 1))
+	foreign key (ACCOUNT_TYPE) references MYNAB_DB.RF_ACCOUNT_TYPE(ID_ACCOUNT_TYPE),
+	foreign key (ACCOUNT_STATUS) references MYNAB_DB.RF_ACCOUNT_STATUS(ID_ACCOUNT_STATUS)
 );
 
 -- ----------------------------------------------------------------------------
