@@ -79,7 +79,7 @@ create table MYNAB_DB.ACCOUNT (
 create table MYNAB_DB.PAYEE (
 	ID_PAYEE int not null auto_increment,
 	ID_USER int not null,
-	PAYEE_NAME varchar(70),
+	PAYEE_NAME varchar(70) not null,
 	primary key (ID_PAYEE),
 	foreign key (ID_USER) references MYNAB_DB.USER(ID_USER)
 );
